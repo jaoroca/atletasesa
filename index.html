@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AtletasESA — La memoria deportiva de El Salvador</title>
+    <meta name="description" content="Base de datos interactiva de atletas olímpicos y deportistas destacados de El Salvador. Compilado por Ana Ruiz, ex-Directora Deportiva del COES.">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        th:hover {
+            background-color: #0056b3;
+        }
+        .filter-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .scrollable-table {
+            max-height: 70vh; /* Adjust as needed */
+            overflow-y: auto;
+            border: 1px solid #ddd;
+        }
+        .athlete-name {
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+            font-weight: bold;
+        }
+        .athlete-name:hover {
+            color: #0056b3;
+        }
+        .profile-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow: auto;
+        }
+        .profile-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 10px;
+            position: relative;
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-btn:hover {
+            color: #000;
+        }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 15px;
+        }
+        .profile-photo {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 20px;
+            border: 3px solid #007bff;
+        }
+        .profile-info h2 {
+            margin: 0 0 10px 0;
+            color: #0056b3;
+        }
+        .profile-detail {
+            margin-bottom: 15px;
+        }
+        .profile-detail strong {
+            color: #0056b3;
+            display: inline-block;
+            width: 200px;
+        }
+        .no-photo {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            border: 3px solid #007bff;
+            font-size: 60px;
+            color: #666;
+        }
+        .social-links {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+        .social-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .social-link.instagram {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            color: white;
+        }
+        .social-link.facebook {
+            background-color: #1877f2;
+            color: white;
+        }
+        .social-link.twitter {
+            background-color: #1da1f2;
+            color: white;
+        }
+        .social-link.youtube {
+            background-color: #ff0000;
+            color: white;
+        }
+        .social-link.tiktok {
+            background-color: #000000;
+            color: white;
+        }
+        .social-link.linkedin {
+            background-color: #0077b5;
+            color: white;
+        }
+        .social-link.website {
+            background-color: #28a745;
+            color: white;
+        }
+        .social-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .social-section h4 {
+            margin: 0 0 10px 0;
+            color: #0056b3;
+            font-size: 1em;
+        }
+        .filters-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .sport-filter {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: white;
+            min-width: 200px;
+        }
+        .stats-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(0,123,255,0.95), rgba(0,86,179,0.95));
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            z-index: 100;
+            min-width: 220px;
+            font-size: 0.8em;
+            max-height: 70vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            opacity: 0.9;
+        }
+        .stats-panel.minimized {
+            opacity: 0.3;
+            transform: scale(0.8);
+        }
+        .stats-panel.minimized:hover {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .stats-panel.collapsed {
+            padding: 8px;
+            min-width: auto;
+        }
+        .stats-panel.collapsed .stats-content {
+            display: none;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .toggle-btn {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .stats-content {
+            transition: all 0.3s ease;
+        }
+        .stats-panel h3 {
+            margin: 0;
+            font-size: 1em;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 3px;
+        }
+        .stats-panel.collapsed h3 {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 4px 0;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+        .stat-number {
+            font-weight: bold;
+            font-size: 1em;
+            color: #ffd700;
+        }
+        .stat-label {
+            font-size: 0.85em;
+        }
+        @media (max-width: 768px) {
+            .stats-panel {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                min-width: 200px;
+                font-size: 0.75em;
+                max-height: 50vh;
+            }
+            .filters-container {
+                flex-direction: column;
+                align-items: stretch;
+                margin-top: 10px;
+            }
+            .scrollable-table {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Base de Datos de Atletas Olímpicos de El Salvador</h1>
+    <p style="text-align: center; color: #666; margin-bottom: 20px;">Incluyendo atletas olímpicos históricos y representantes activos de las federaciones deportivas nacionales</p>
+
+    <div class="filters-container">
+        <input type="text" id="searchInput" class="filter-input" onkeyup="filterTable()" placeholder="Buscar en la tabla...">
+        <select id="sportFilter" class="sport-filter" onchange="filterTable()">
+            <option value="">Todos los deportes</option>
+        </select>
+        <button onclick="clearFilters()" style="padding: 8px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            🔄 Limpiar Filtros
+        </button>
+    </div>
+
+    <!-- Panel de Estadísticas -->
+    <div class="stats-panel" id="statsPanel">
+        <div class="panel-header" onclick="toggleStatsPanel()">
+            <h3>📊 Estadísticas</h3>
+            <div>
+                <button class="toggle-btn" id="toggleBtn" onclick="event.stopPropagation(); toggleStatsPanel();">−</button>
+                <button class="toggle-btn" onclick="event.stopPropagation(); minimizeStatsPanel();" title="Minimizar" style="margin-left: 3px;">□</button>
+            </div>
+        </div>
+        <div class="stats-content" id="statsContent">
+        <div class="stat-item">
+            <span class="stat-label">Total Atletas:</span>
+            <span class="stat-number" id="totalAthletes">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Atletas Activos:</span>
+            <span class="stat-number" id="activeAthletes">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Olimpicos Históricos:</span>
+            <span class="stat-number" id="olympicAthletes">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Deportes Representados:</span>
+            <span class="stat-number" id="sportsCount">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Federaciones:</span>
+            <span class="stat-number" id="federationsCount">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">París 2024:</span>
+            <span class="stat-number" id="paris2024Count">0</span>
+        </div>
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 2px solid rgba(255,255,255,0.3);">
+            <div style="font-size: 0.8em; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
+                🏆 **Logros Destacados:**
+            </div>
+            <div style="font-size: 0.75em; color: rgba(255,255,255,0.7); line-height: 1.3;">
+                • 5º lugar olímpico (Maureen Vergara)<br>
+                • Oro Panamericano (Cristina López)<br>
+                • Diploma olímpico (Luisa Maida)<br>
+                • Múltiples récords nacionales<br>
+                • 8 representantes en París 2024
+            </div>
+        </div>
+            <div style="margin-top: 10px; font-size: 0.75em; color: rgba(255,255,255,0.6);">
+                📅 **Actualización:** Febrero 2026
+            </div>
+        </div>
+    </div>
+
+    <div class="scrollable-table">
+        <table id="athletesTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Nombre del Atleta</th>
+                    <th onclick="sortTable(1)">Deporte</th>
+                    <th onclick="sortTable(2)">Disciplina</th>
+                    <th onclick="sortTable(3)">Fecha de Nacimiento</th>
+                    <th onclick="sortTable(4)">Periodo de Actividad</th>
+                    <th onclick="sortTable(5)">Federación Nacional</th>
+                    <th onclick="sortTable(6)">Federación Internacional</th>
+                    <th onclick="sortTable(7)">Participaciones Olímpicas</th>
+                    <th onclick="sortTable(8)">Otros Logros Destacados</th>
+                    <th onclick="sortTable(9)">Estatus Actual</th>
+                    <th onclick="sortTable(10)">Notas/Trayectoria</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="profile-modal">
+        <div class="profile-content">
+            <span class="close-btn" onclick="closeProfile()">&times;</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <button onclick="navigateProfile('prev')" style="background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;" id="prevBtn">← Anterior</button>
+                <h3 style="margin: 0; color: #0056b3;">Perfil del Atleta</h3>
+                <button onclick="navigateProfile('next')" style="background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;" id="nextBtn">Siguiente →</button>
+            </div>
+            <div class="profile-header">
+                <div class="no-photo" id="profilePhoto">👤</div>
+                <div class="profile-info">
+                    <h2 id="profileName"></h2>
+                    <p id="profileSport"></p>
+                </div>
+            </div>
+            <div class="profile-details">
+                <div class="profile-detail">
+                    <strong>Disciplina:</strong>
+                    <span id="profileDiscipline"></span>
+                </div>
+                <div class="profile-detail">
+                    <strong>Fecha de Nacimiento:</strong>
+                    <span id="profileBirth"></span>
+                </div>
+                <div class="profile-detail">
+                    <strong>Periodo de Actividad:</strong>
+                    <span id="profilePeriod"></span>
+                </div>
+                <div class="profile-detail">
+                    <strong>Federación Nacional:</strong>
+                    <span id="profileNationalFed"></span>
+                </div>
+                <div class="profile-detail">
+                    <strong>Federación Internacional:</strong>
+                    <span id="profileInternationalFed"></span>
+                </div>
+                <div class="profile-detail">
+                    <strong>Participaciones Olímpicas:</strong>
+                    <span id="profileOlympics"></span>
+                </div>
+                <div class="profile-detail">
+                    <strong>Logros Destacados:</strong>
+                    <span id="profileAchievements"></span>
+                </div>
+                <div class="profile-detail">
+                    <strong>Estatus Actual:</strong>
+                    <span id="profileStatus"></span>
+                </div>
+                <div class="profile-detail">
+                    <strong>Trayectoria:</strong>
+                    <span id="profileTrajectory"></span>
+                </div>
+            </div>
+            
+            <div class="social-section">
+                <h4>🌐 Redes Sociales</h4>
+                <div class="social-links" id="socialLinks">
+                    <!-- Los enlaces sociales se insertarán aquí dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const athletesData = [
+            {"Nombre del Atleta":"Maureen Kaila Vergara","Deporte":"Ciclismo","Disciplina":"Pista - Carrera por Puntos","Fecha de Nacimiento":"17/12/1964","Periodo de Actividad":"1990-2001","Federación Nacional":"Federación Salvadoreña de Ciclismo (FSC)","Federación Internacional":"Union Cycliste Internationale (UCI)","Participaciones Olímpicas":"Atlanta 1996 (5º lugar en Carrera por Puntos), Sídney 2000 (Carrera por Puntos)","Otros Logros Destacados":"Juegos Centroamericanos y del Caribe Maracaibo 1998 (Oro en Contrarreloj, Plata en Puntos); Juegos Deportivos Centroamericanos Guatemala 2001 (Oro en Ruta)","Estatus Actual":"Retirada","Notas/Trayectoria":"Mejor actuación olímpica para El Salvador (5º lugar)."},
+            {"Nombre del Atleta":"Evelyn García Marroquín","Deporte":"Ciclismo","Disciplina":"Ruta, Pista (Persecución Individual)","Fecha de Nacimiento":"29/12/1982","Periodo de Actividad":"2001-2023 (Retiro oficial 2025)","Federación Nacional":"Federación Salvadoreña de Ciclismo (FSC)","Federación Internacional":"Union Cycliste Internationale (UCI)","Participaciones Olímpicas":"Atenas 2004 (Ruta, Persecución Individual); Beijing 2008 (Ruta, Persecución Individual); Londres 2012 (Ruta - 26º lugar)","Otros Logros Destacados":"Juegos Panamericanos (Plata en Contrarreloj Guadalajara 2011, Bronce en Contrarreloj Toronto 2015); Juegos Centroamericanos y del Caribe (Múltiples medallas, incluyendo Oro en México 2014)","Estatus Actual":"Retirada (anunciado para 2025)","Notas/Trayectoria":"Primera mujer en ganar dos veces la Vuelta Ciclista Femenina a El Salvador."},
+            {"Nombre del Atleta":"Marcelo Acosta Jiménez","Deporte":"Natación","Disciplina":"Estilos Libres (200m, 400m, 800m, 1500m)","Fecha de Nacimiento":"10/06/1996","Periodo de Actividad":"2014-2022","Federación Nacional":"Federación Salvadoreña de Natación (FSN)","Federación Internacional":"World Aquatics (antes FINA)","Participaciones Olímpicas":"Río 2016 (200m Libre, 400m Libre, 1500m Libre - 22º lugar); Tokio 2020 (800m Libre - 31º lugar, 1500m Libre - 25º lugar)","Otros Logros Destacados":"Juegos Olímpicos de la Juventud Nanjing 2014 (Plata en 400m Libre); Juegos Centroamericanos y del Caribe (Oro en 1500m Libre Veracruz 2014, Oro en 400m Libre Barranquilla 2018, Plata en 1500m Libre Barranquilla 2018); Récords Nacionales en varias distancias de estilo libre.","Estatus Actual":"Retirado (Junio 2022)","Notas/Trayectoria":"Primer nadador salvadoreño en clasificar a Juegos Olímpicos con marca \"A\"."},
+            {"Nombre del Atleta":"Luisa Maida","Deporte":"Tiro","Disciplina":"Pistola de Aire 10m, Pistola Deportiva 25m","Fecha de Nacimiento":"18/06/1979","Periodo de Actividad":"1999-2009","Federación Nacional":"Federación Salvadoreña de Tiro","Federación Internacional":"International Shooting Sport Federation (ISSF)","Participaciones Olímpicas":"Sídney 2000 (Pistola Aire 10m - 36º, Pistola Deportiva 25m - 41º); Pekín 2008 (Pistola Aire 10m - 34º, Pistola Deportiva 25m - 8º lugar)","Otros Logros Destacados":"Juegos Centroamericanos y del Caribe (Oro en Pistola 10m, Bronce en Pistola Deportiva 25m Cartagena 2002); Juegos Panamericanos Río 2007 (Plata en Pistola de Aire 10m, Bronce en Pistola Deportiva 25m)","Estatus Actual":"Retirada (2009)","Notas/Trayectoria":"Único diploma olímpico de El Salvador (8º lugar en Pekín 2008)."},
+            {"Nombre del Atleta":"Roberto Hernández Maldonado","Deporte":"Tiro con Arco","Disciplina":"Arco Compuesto","Fecha de Nacimiento":"09/01/1989","Periodo de Actividad":"2002-Presente","Federación Nacional":"Federación Salvadoreña de Tiro con Arco","Federación Internacional":"World Archery Federation","Participaciones Olímpicas":"No ha participado (su disciplina no es Olímpica).","Otros Logros Destacados":"Juegos Panamericanos (Oro Individual Lima 2019, Oro por Equipos Santiago 2023); Campeonato Mundial (Bronce por Equipos Ulsan 2009); Juegos Mundiales (Bronce Individual Cali 2013); Juegos Bolivarianos (Múltiples medallas); Juegos Centroamericanos y del Caribe (Múltiples medallas).","Estatus Actual":"Activo","Notas/Trayectoria":"Desea participar en JJ.OO. si se incluye el arco compuesto."},{"Nombre del Atleta":"Cristina Esmeralda López","Deporte":"Atletismo","Disciplina":"Marcha Atlética (20 km)","Fecha de Nacimiento":"19/09/1982","Periodo de Actividad":"1998-2013 (aprox.)","Federación Nacional":"Federación Salvadoreña de Atletismo","Federación Internacional":"World Athletics","Participaciones Olímpicas":"No ha participado.","Otros Logros Destacados":"Juegos Panamericanos Río 2007 (Oro en 20 km marcha - 1º Oro Panamericano para El Salvador); Juegos Centroamericanos y del Caribe Cartagena 2006 (Oro en 20 km marcha); Juegos Deportivos Centroamericanos San José 2013 (Oro en 20 km marcha).","Estatus Actual":"Retirada","Notas/Trayectoria":"Primera y única atleta de El Salvador en ganar una medalla de oro en los Juegos Panamericanos."},{"Nombre del Atleta":"Jairo Moreno","Deporte":"Judo","Disciplina":"-60 kg","Fecha de Nacimiento":"2001","Periodo de Actividad":"2007-Presente","Federación Nacional":"Federación Salvadoreña de Judo","Federación Internacional":"International Judo Federation (IJF)","Participaciones Olímpicas":"París 2024 (derrota en primera ronda)","Otros Logros Destacados":"Lima Panamerican Open 2024 (Oro).","Estatus Actual":"Activo","Notas/Trayectoria":"Sexto atleta salvadoreño en clasificar a París 2024. Su padre también fue judoca olímpico."},{"Nombre del Atleta":"Israel Gutiérrez","Deporte":"Tiro","Disciplina":"Rifle de Aire 10m, Rifle 50m Tres Posiciones","Fecha de Nacimiento":"N/A","Periodo de Actividad":"N/A","Federación Nacional":"Federación Salvadoreña de Tiro","Federación Internacional":"International Shooting Sport Federation (ISSF)","Participaciones Olímpicas":"París 2024 (Rifle de Aire 10m - 46º lugar, Rifle 50m Tres Posiciones - 40º lugar)","Otros Logros Destacados":"Juegos Centroamericanos y del Caribe San Salvador 2023 (Oro en 50 metros rifle tres posiciones).","Estatus Actual":"Activo","Notas/Trayectoria":"Debut olímpico en París 2024."},{"Nombre del Atleta":"Uriel Francisco Canjura Artiga","Deporte":"Bádminton","Disciplina":"Individual Masculino","Fecha de Nacimiento":"12/09/2000","Periodo de Actividad":"2009-Presente","Federación Nacional":"Federación Salvadoreña de Bádminton (FESABAD)","Federación Internacional":"Badminton World Federation (BWF)","Participaciones Olímpicas":"París 2024 (derrotas en fase de grupos)","Otros Logros Destacados":"Juegos Panamericanos Santiago 2023 (Bronce Individual Masculino); Campeonato Panamericano de Bádminton (Plata Kingston 2023, Plata Ciudad de Guatemala 2024, Bronce San Salvador 2022); Juegos Panamericanos Junior 2021 (Plata Individual Masculino y Dobles Mixtos).","Estatus Actual":"Activo","Notas/Trayectoria":"Primer atleta salvadoreño de bádminton en clasificar a unos Juegos Olímpicos."},{"Nombre del Atleta":"Nixon Hernández","Deporte":"Natación","Disciplina":"100m Estilo Libre","Fecha de Nacimiento":"1997","Periodo de Actividad":"2006-Presente","Federación Nacional":"Federación Salvadoreña de Natación (FSN)","Federación Internacional":"World Aquatics (antes FINA)","Participaciones Olímpicas":"París 2024 (100m Estilo Libre - 65º lugar)","Otros Logros Destacados":"Récords Nacionales (100m Estilo Libre piscina corta, 50m Estilo Libre piscina corta); Participación en Campeonato Mundial de Natación.","Estatus Actual":"Activo","Notas/Trayectoria":"Debut olímpico en París 2024; Aspira a Los Ángeles 2028."},{"Nombre del Atleta":"Celina Márquez","Deporte":"Natación","Disciplina":"100m Espalda, 200m Espalda","Fecha de Nacimiento":"16/07/1999","Periodo de Actividad":"2006-Presente (aprox.)","Federación Nacional":"Federación Salvadoreña de Natación (FSN)","Federación Internacional":"World Aquatics (antes FINA)","Participaciones Olímpicas":"Tokio 2020 (100m Espalda, 200m Espalda - 23º en 200m); París 2024 (100m Espalda - 32º lugar)","Otros Logros Destacados":"Juegos Olímpicos de la Juventud Nanjing 2014; Campeonato Mundial de Natación 2017; Medalla de Bronce en 100m Mariposa en Juegos Centroamericanos y del Caribe 2018; Récord escolar NCAA Div II (200 yardas espalda).","Estatus Actual":"Activa","Notas/Trayectoria":"Abanderada en Tokio 2020 y París 2024."},{"Nombre del Atleta":"Óscar Ticas","Deporte":"Tiro con Arco","Disciplina":"Arco Recurvo Individual","Fecha de Nacimiento":"N/A (37 años en 2024)","Periodo de Actividad":"N/A","Federación Nacional":"Federación Salvadoreña de Tiro con Arco","Federación Internacional":"World Archery Federation","Participaciones Olímpicas":"París 2024 (Ronda de eliminación individual - 53º cabeza de serie, finalizó en primera ronda)","Otros Logros Destacados":"Campeón Panamericano 2006; Medalla de Bronce en evento de Ranking Mundial Medellín 2021.","Estatus Actual":"Activo","Notas/Trayectoria":"Primera participación olímpica en París 2024 tras perseverancia (suspensión por dopaje previo a Río 2016). Entrenador nacional juvenil."},
+            {"Nombre del Atleta":"Bryan Pérez","Deporte":"Surf","Disciplina":"Open Surf (Shortboard)","Fecha de Nacimiento":"N/A","Periodo de Actividad":"N/A","Federación Nacional":"Federación Salvadoreña de Surf","Federación Internacional":"International Surfing Association (ISA)","Participaciones Olímpicas":"París 2024 (eliminado en segunda ronda)","Otros Logros Destacados":"Medalla de Bronce en Juegos Panamericanos Lima 2019; Medalla de Bronce en Juegos Centroamericanos y del Caribe San Salvador 2023; Campeón ALAS Pro Tour 2023; Campeón Nacional Salvadoreño.","Estatus Actual":"Activo","Notas/Trayectoria":"Primer surfista salvadoreño en Juegos Olímpicos."},
+            {"Nombre del Atleta":"Enrique Arathoon","Deporte":"Vela","Disciplina":"One Person Dinghy (Laser/ILCA 7)","Fecha de Nacimiento":"18/01/1992","Periodo de Actividad":"N/A","Federación Nacional":"Federación Salvadoreña de Vela","Federación Internacional":"World Sailing","Participaciones Olímpicas":"Río 2016 (24º lugar); Tokio 2020 (23º lugar); París 2024 (categoría Men's Dinghy ILCA 7)","Otros Logros Destacados":"Clasificación para París 2024 en Last Chance Regatta.","Estatus Actual":"Activo (retirada de alta competición después de París 2024)","Notas/Trayectoria":"Tercera participación olímpica. Abanderado en Tokio 2020."},
+            {"Nombre del Atleta":"Óscar Ticas","Deporte":"Tiro con Arco","Disciplina":"Arco Recurvo","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2015-Presente","Federación Nacional":"Federación Salvadoreña de Tiro con Arco","Federación Internacional":"World Archery Federation","Participaciones Olímpicas":"París 2024","Otros Logros Destacados":"Clasificado para Juegos Olímpicos París 2024; Participación en torneos continentales.","Estatus Actual":"Activo","Notas/Trayectoria":"Representante olímpico en París 2024."},
+            {"Nombre del Atleta":"Uriel Canjura","Deporte":"Bádminton","Disciplina":"Individual Masculino","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2018-Presente","Federación Nacional":"Federación Salvadoreña de Bádminton","Federación Internacional":"Badminton World Federation (BWF)","Participaciones Olímpicas":"París 2024","Otros Logros Destacados":"Primer representante olímpico de bádminton para El Salvador; Clasificado para París 2024.","Estatus Actual":"Activo","Notas/Trayectoria":"Histórico clasificador olímpico para El Salvador en bádminton."},
+            {"Nombre del Atleta":"Nixon Hernández","Deporte":"Natación","Disciplina":"Crol 100m","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2020-Presente","Federación Nacional":"Federación Salvadoreña de Natación (FSN)","Federación Internacional":"World Aquatics","Participaciones Olímpicas":"París 2024","Otros Logros Destacados":"Clasificado para Juegos Olímpicos París 2024; Participante en eventos nacionales e internacionales.","Estatus Actual":"Activo","Notas/Trayectoria":"Representante olímpico en natación estilo libre."},
+            {"Nombre del Atleta":"Celina Márquez","Deporte":"Natación","Disciplina":"Espalda 100m","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2018-Presente","Federación Nacional":"Federación Salvadoreña de Natación (FSN)","Federación Internacional":"World Aquatics","Participaciones Olímpicas":"París 2024","Otros Logros Destacados":"Clasificada para Juegos Olímpicos París 2024; Medallista en eventos centroamericanos.","Estatus Actual":"Activa","Notas/Trayectoria":"Una de las nadadoras más destacadas del país actual."},
+            {"Nombre del Atleta":"Israel Gutiérrez","Deporte":"Tiro Deportivo","Disciplina":"Rifle de Aire 10m, Rifle en tres posiciones 50m","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2015-Presente","Federación Nacional":"Federación Salvadoreña de Tiro","Federación Internacional":"International Shooting Sport Federation (ISSF)","Participaciones Olímpicas":"París 2024","Otros Logros Destacados":"Clasificado para Juegos Olímpicos París 2024 en dos modalidades; Participante en Copa del Mundo.","Estatus Actual":"Activo","Notas/Trayectoria":"Tirador de élite con múltiples participaciones internacionales."},
+            {"Nombre del Atleta":"Pablo Ibáñez","Deporte":"Atletismo","Disciplina":"Saltos (Triple Salto, Salto Largo)","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2015-Presente","Federación Nacional":"Federación Salvadoreña de Atletismo","Federación Internacional":"World Athletics","Participaciones Olímpicas":"No ha participado","Otros Logros Destacados":"Campeonatos Mundiales (Londres 2017, Eugene 2022, Budapest 2023); Juegos Panamericanos Lima 2019, Santiago 2023; Múltiples medallas en Juegos Centroamericanos y del Caribe.","Estatus Actual":"Activo","Notas/Trayectoria":"Atleta de élite en saltos, uno de los más importantes del atletismo salvadoreño actual."},
+            {"Nombre del Atleta":"Luisa Ferrera","Deporte":"Atletismo","Disciplina":"Velocidad (100m, 200m, 4x100m relevos)","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2018-Presente","Federación Nacional":"Federación Salvadoreña de Atletismo","Federación Internacional":"World Athletics","Participaciones Olímpicas":"No ha participado","Otros Logros Destacados":"Medallista en Juegos Centroamericanos y del Caribe; Participante en Campeonatos Mundiales; Recordista nacional en categorías juveniles.","Estatus Actual":"Activa","Notas/Trayectoria":"Una de las velocistas más importantes del país actual."},
+            {"Nombre del Atleta":"Andrea Hernández","Deporte":"Lucha Olímpica","Disciplina":"Lucha Libre","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2018-Presente","Federación Nacional":"Federación Salvadoreña de Lucha","Federación Internacional":"United World Wrestling","Participaciones Olímpicas":"No ha participado","Otros Logros Destacados":"Medallista en Juegos Centroamericanos; Clasificada para Panamericanos; Participante en Campeonatos Mundiales.","Estatus Actual":"Activa","Notas/Trayectoria":"Luchadora de élite representando a El Salvador en competencias internacionales."},
+            {"Nombre del Atleta":"Marvin Rodríguez","Deporte":"Surf","Disciplina":"Open Surf (Shortboard)","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2018-Presente","Federación Nacional":"Federación Salvadoreña de Surf","Federación Internacional":"International Surfing Association (ISA)","Participaciones Olímpicas":"No ha participado","Otros Logros Destacados":"Seleccionado para ISA World Surfing Games 2025; Medallista en Circuitos Nacionales; Participante en World Surf League.","Estatus Actual":"Activo","Notas/Trayectoria":"Surfista de alto nivel representando a El Salvador en competencias internacionales."},
+            {"Nombre del Atleta":"Julissa Castillo","Deporte":"Surf","Disciplina":"Open Surf (Femenino)","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2019-Presente","Federación Nacional":"Federación Salvadoreña de Surf","Federación Internacional":"International Surfing Association (ISA)","Participaciones Olímpicas":"No ha participado","Otros Logros Destacados":"Seleccionada para ISA World Surfing Games 2025; Una de las mejores surfistas del país; Medallista en competencias nacionales.","Estatus Actual":"Activa","Notas/Trayectoria":"Referente del surf femenino en El Salvador."},
+            {"Nombre del Atleta":"Sofía Paiz","Deporte":"Levantamiento de Pesas","Disciplina":"Categoría 59kg","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2018-Presente","Federación Nacional":"Federación Salvadoreña de Levantamiento de Pesas","Federación Internacional":"International Weightlifting Federation (IWF)","Participaciones Olímpicas":"No ha participado","Otros Logros Destacados":"Superó los 700 puntos en Challenger 2025; Medallista en Juegos Centroamericanos; Clasificada para Campeonatos Mundiales.","Estatus Actual":"Activa","Notas/Trayectoria":"Una de las levantadoras de pesas más importantes del país actual."},
+            {"Nombre del Atleta":"Herbert Aceituno","Deporte":"Levantamiento de Pesas","Disciplina":"Categoría 81kg","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2017-Presente","Federación Nacional":"Federación Salvadoreña de Levantamiento de Pesas","Federación Internacional":"International Weightlifting Federation (IWF)","Participaciones Olímpicas":"No ha participado","Otros Logros Destacados":"Destacado en competencias internacionales; Medallista regional; Representante en Campeonatos Mundiales.","Estatus Actual":"Activo","Notas/Trayectoria":"Levantador de élite con proyección olímpica."},
+            {"Nombre del Atleta":"Yuri Rodríguez","Deporte":"Taekwondo","Disciplina":"Poomsae","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2019-Presente","Federación Nacional":"Federación Salvadoreña de Taekwondo","Federación Internacional":"World Taekwondo (WT)","Participaciones Olímpicas":"No ha participado","Otros Logros Destacados":"Medallista en Juegos Centroamericanos; Destacada en competencias internacionales de Poomsae.","Estatus Actual":"Activa","Notas/Trayectoria":"Atleta destacada en modalidad de Poomsae."},
+            {"Nombre del Atleta":"Ivonne Nochez","Deporte":"Ciclismo","Disciplina":"Ruta Femenina","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2018-Presente","Federación Nacional":"Federación Salvadoreña de Ciclismo (FSC)","Federación Internacional":"Union Cycliste Internationale (UCI)","Participaciones Olímpicas":"No ha participado","Otros Logros Destacados":"Vencedora en Vuelta Femenina a El Salvador; Medallista en Juegos Centroamericanos; Participante en competencias UCI.","Estatus Actual":"Activa","Notas/Trayectoria":"Una de las ciclistas más importantes del ciclismo actual."},
+            {"Nombre del Atleta":"Daniel Monterrosa","Deporte":"Surf","Disciplina":"Longboard","Fecha de Nacimiento":"N/A","Periodo de Actividad":"2017-Presente","Federación Nacional":"Federación Salvadoreña de Surf","Federación Internacional":"International Surfing Association (ISA)","Participaciones Olímpicas":"No ha participado","Otros Logros Destacados":"Seleccionado para ISA World Surfing Games 2025; Medallista en competencias internacionales de Longboard.","Estatus Actual":"Activo","Notas/Trayectoria":"Especialista en Longboard a nivel internacional."}
+        ];
+
+        let sortDirection = {}; // To keep track of sort direction for each column
+
+        function populateTable() {
+            const tbody = document.querySelector("#athletesTable tbody");
+            tbody.innerHTML = ''; // Clear existing rows
+            
+            // Apply filters
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const sportFilter = document.getElementById('sportFilter').value;
+            
+            filteredData = athletesData.filter((athlete, index) => {
+                const matchesSearch = searchTerm === '' || 
+                    Object.values(athlete).some(value => 
+                        value && value.toString().toLowerCase().includes(searchTerm)
+                    );
+                const matchesSport = sportFilter === '' || athlete["Deporte"] === sportFilter;
+                return matchesSearch && matchesSport;
+            });
+            
+            filteredData.forEach((athlete, originalIndex) => {
+                const actualIndex = athletesData.indexOf(athlete);
+                const row = tbody.insertRow();
+                // Explicitly define ordered keys to match table headers
+                const orderedKeys = [
+                    "Nombre del Atleta", "Deporte", "Disciplina", "Fecha de Nacimiento",
+                    "Periodo de Actividad", "Federación Nacional", "Federación Internacional",
+                    "Participaciones Olímpicas", "Otros Logros Destacados", "Estatus Actual", "Notas/Trayectoria"
+                ];
+                orderedKeys.forEach((key, colIndex) => {
+                    const cell = row.insertCell();
+                    if (key === "Nombre del Atleta") {
+                        const nameSpan = document.createElement('span');
+                        nameSpan.className = 'athlete-name';
+                        nameSpan.textContent = athlete[key] || '';
+                        nameSpan.onclick = () => showProfile(actualIndex);
+                        cell.appendChild(nameSpan);
+                    } else {
+                        cell.textContent = athlete[key] || ''; // Use key to access property, or empty string if not found
+                    }
+                });
+            });
+            
+            // Update statistics with filtered data
+            updateFilteredStats();
+        }
+        
+        function updateFilteredStats() {
+            const activeFiltered = filteredData.filter(a => a["Estatus Actual"] === "Activo" || a["Estatus Actual"] === "Activa").length;
+            const olympicFiltered = filteredData.filter(a => 
+                a["Participaciones Olímpicas"] && a["Participaciones Olímpicas"].includes("Olímp")
+            ).length;
+            
+            // Update panel with filtered info
+            const filteredInfo = document.createElement('div');
+            filteredInfo.style.marginTop = '10px';
+            filteredInfo.style.paddingTop = '10px';
+            filteredInfo.style.borderTop = '1px solid rgba(255,255,255,0.3)';
+            filteredInfo.innerHTML = `
+                <div style="font-size: 0.8em; color: rgba(255,255,255,0.8);">
+                    Mostrando: <span style="color: #ffd700; font-weight: bold;">${filteredData.length}</span> atletas
+                    ${document.getElementById('searchInput').value || document.getElementById('sportFilter').value ? '(filtrados)' : ''}
+                </div>
+            `;
+            
+            // Remove previous filtered info if exists
+            const existing = document.querySelector('#statsPanel .filtered-info');
+            if (existing) existing.remove();
+            
+            filteredInfo.className = 'filtered-info';
+            document.getElementById('statsPanel').appendChild(filteredInfo);
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById("athletesTable");
+            const tbody = table.querySelector("tbody");
+            const rows = Array.from(tbody.rows);
+
+            const isAsc = sortDirection[columnIndex] === 'asc';
+            sortDirection[columnIndex] = isAsc ? 'desc' : 'asc';
+
+            rows.sort((rowA, rowB) => {
+                const cellA = rowA.cells[columnIndex].textContent.toLowerCase();
+                const cellB = rowB.cells[columnIndex].textContent.toLowerCase();
+
+                let comparison = 0;
+                if (cellA > cellB) {
+                    comparison = 1;
+                } else if (cellA < cellB) {
+                    comparison = -1;
+                }
+                return isAsc ? comparison : -comparison;
+            });
+
+            // Re-append sorted rows
+            tbody.innerHTML = '';
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function filterTable() {
+            populateTable();
+        }
+        
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('sportFilter').value = '';
+            populateTable();
+        }
+
+        let currentAthleteIndex = -1;
+        let filteredData = [];
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            populateSportFilter();
+            updateStatistics();
+            populateTable();
+        });
+        
+        function populateSportFilter() {
+            const sportFilter = document.getElementById('sportFilter');
+            const sports = [...new Set(athletesData.map(athlete => athlete["Deporte"]))].sort();
+            
+            sportFilter.innerHTML = '<option value="">Todos los deportes</option>';
+            sports.forEach(sport => {
+                const option = document.createElement('option');
+                option.value = sport;
+                option.textContent = sport;
+                sportFilter.appendChild(option);
+            });
+        }
+        
+        function updateStatistics() {
+            const totalAthletes = athletesData.length;
+            const activeAthletes = athletesData.filter(a => a["Estatus Actual"] === "Activo" || a["Estatus Actual"] === "Activa").length;
+            const olympicAthletes = athletesData.filter(a => 
+                a["Participaciones Olímpicas"] && a["Participaciones Olímpicas"].includes("Olímp")
+            ).length;
+            const sportsCount = [...new Set(athletesData.map(a => a["Deporte"]))].length;
+            const federationsCount = [...new Set(athletesData.map(a => a["Federación Nacional"]))].length;
+            const paris2024Count = athletesData.filter(a => 
+                a["Participaciones Olímpicas"] && a["Participaciones Olímpicas"].includes("París 2024")
+            ).length;
+            
+            document.getElementById('totalAthletes').textContent = totalAthletes;
+            document.getElementById('activeAthletes').textContent = activeAthletes;
+            document.getElementById('olympicAthletes').textContent = olympicAthletes;
+            document.getElementById('sportsCount').textContent = sportsCount;
+            document.getElementById('federationsCount').textContent = federationsCount;
+            document.getElementById('paris2024Count').textContent = paris2024Count;
+        }
+        
+        function showProfile(athleteIndex) {
+            currentAthleteIndex = athleteIndex;
+            const athlete = athletesData[athleteIndex];
+            
+            // Update modal content
+            document.getElementById('profileName').textContent = athlete["Nombre del Atleta"];
+            document.getElementById('profileSport').textContent = athlete["Deporte"];
+            document.getElementById('profileDiscipline').textContent = athlete["Disciplina"];
+            document.getElementById('profileBirth').textContent = athlete["Fecha de Nacimiento"];
+            document.getElementById('profilePeriod').textContent = athlete["Periodo de Actividad"];
+            document.getElementById('profileNationalFed').textContent = athlete["Federación Nacional"];
+            document.getElementById('profileInternationalFed').textContent = athlete["Federación Internacional"];
+            document.getElementById('profileOlympics').textContent = athlete["Participaciones Olímpicas"];
+            document.getElementById('profileAchievements').textContent = athlete["Otros Logros Destacados"];
+            document.getElementById('profileStatus').textContent = athlete["Estatus Actual"];
+            document.getElementById('profileTrajectory').textContent = athlete["Notas/Trayectoria"];
+            
+            // Update photo if available
+            updateProfilePhoto(athlete["Nombre del Atleta"]);
+            
+            // Update social media links
+            updateSocialLinks(athlete["Nombre del Atleta"]);
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = athleteIndex === 0;
+            document.getElementById('nextBtn').disabled = athleteIndex === athletesData.length - 1;
+            
+            // Show modal
+            document.getElementById('profileModal').style.display = 'block';
+        }
+        
+        function updateSocialLinks(athleteName) {
+            const socialLinksContainer = document.getElementById('socialLinks');
+            socialLinksContainer.innerHTML = '';
+            
+            // Base de datos de redes sociales de atletas
+            const socialMediaData = {
+                "Bryan Pérez": [
+                    { platform: "instagram", url: "https://www.instagram.com/bryanperezsv/", icon: "📷" },
+                    { platform: "facebook", url: "https://www.facebook.com/BryanPerezSurf", icon: "📘" },
+                    { platform: "website", url: "https://www.worldsurfleague.com/athletes/bryan-perez", icon: "🌐" }
+                ],
+                "Pablo Ibáñez": [
+                    { platform: "instagram", url: "https://www.instagram.com/pabloibanez/", icon: "📷" },
+                    { platform: "facebook", url: "https://www.facebook.com/pabloibanez.atleta", icon: "📘" },
+                    { platform: "twitter", url: "https://twitter.com/pabloibanez", icon: "🐦" }
+                ],
+                "Celina Márquez": [
+                    { platform: "instagram", url: "https://www.instagram.com/celinamarquez/", icon: "📷" },
+                    { platform: "facebook", url: "https://www.facebook.com/celinamarquezswim", icon: "📘" },
+                    { platform: "twitter", url: "https://twitter.com/celinamarquez", icon: "🐦" },
+                    { platform: "website", url: "https://www.worldaquatics.com/athletes/1036306", icon: "🌐" }
+                ],
+                "Enrique Arathoon": [
+                    { platform: "instagram", url: "https://www.instagram.com/enriquearathoon/", icon: "📷" },
+                    { platform: "facebook", url: "https://www.facebook.com/enrique.arathoon", icon: "📘" },
+                    { platform: "website", url: "https://www.sailing.org/biography?memberid=134212", icon: "🌐" }
+                ],
+                "Evelyn García Marroquín": [
+                    { platform: "instagram", url: "https://www.instagram.com/evelyngarciasv/", icon: "📷" },
+                    { platform: "facebook", url: "https://www.facebook.com/evelyngarcia.ciclista", icon: "📘" },
+                    { platform: "website", url: "https://www.procyclingstats.com/rider/evelyn-garcia-marroquin", icon: "🌐" }
+                ],
+                "Uriel Canjura": [
+                    { platform: "instagram", url: "https://www.instagram.com/urielcanjura/", icon: "📷" },
+                    { platform: "facebook", url: "https://www.facebook.com/urielcanjura.badminton", icon: "📘" },
+                    { platform: "website", url: "https://www.teamesa.org/uriel-canjura", icon: "🌐" }
+                ],
+                "Roberto Hernández Maldonado": [
+                    { platform: "instagram", url: "https://www.instagram.com/robertoarchery/", icon: "📷" },
+                    { platform: "facebook", url: "https://www.facebook.com/robertohernandez.archery", icon: "📘" },
+                    { platform: "website", url: "https://www.teamesa.org/roberto-hernandez", icon: "🌐" }
+                ],
+                "Marvin Rodríguez": [
+                    { platform: "instagram", url: "https://www.instagram.com/marvinrodriguez.surf/", icon: "📷" },
+                    { platform: "facebook", url: "https://www.facebook.com/marvinrodriguez.surf", icon: "📘" },
+                    { platform: "website", url: "https://www.fesurf.es/", icon: "🌐" }
+                ],
+                "Sofía Paiz": [
+                    { platform: "instagram", url: "https://www.instagram.com/sofiapaiz.weightlifting/", icon: "📷" },
+                    { platform: "facebook", url: "https://www.facebook.com/sofiapaiz.lift", icon: "📘" },
+                    { platform: "website", url: "https://www.iwf.net/results/athletes/?athlete=10116", icon: "🌐" }
+                ],
+                "Óscar Ticas": [
+                    { platform: "instagram", url: "https://www.instagram.com/oscarticas.archery/", icon: "📷" },
+                    { platform: "facebook", url: "https://www.facebook.com/oscarticas.archery", icon: "📘" },
+                    { platform: "website", url: "https://www.teamesa.org/oscar-ticas", icon: "🌐" }
+                ]
+            };
+            
+            const athleteSocials = socialMediaData[athleteName];
+            
+            if (athleteSocials && athleteSocials.length > 0) {
+                athleteSocials.forEach(social => {
+                    const link = document.createElement('a');
+                    link.href = social.url;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.className = `social-link ${social.platform}`;
+                    link.title = social.platform.charAt(0).toUpperCase() + social.platform.slice(1);
+                    link.innerHTML = social.icon;
+                    socialLinksContainer.appendChild(link);
+                });
+            } else {
+                // Mostrar mensaje si no hay redes sociales disponibles
+                const noSocials = document.createElement('p');
+                noSocials.style.color = '#666';
+                noSocials.style.fontSize = '0.9em';
+                noSocials.style.margin = '0';
+                noSocials.textContent = '📱 Redes sociales no disponibles para este atleta';
+                socialLinksContainer.appendChild(noSocials);
+            }
+        }
+        
+        function updateProfilePhoto(athleteName) {
+            const photoElement = document.getElementById('profilePhoto');
+            const athletePhotos = {
+                "Evelyn García Marroquín": "evelyn_garcia.jpg",
+                "Bryan Pérez": "bryan_perez.jpg",
+                "Cristina Esmeralda López": "cristina_lopez.jpg",
+                "Enrique Arathoon": "enrique_arathoon.jpg",
+                "Pablo Ibáñez": "pablo_ibanez.jpg",
+                "Celina Márquez": "celina_marquez.jpg",
+                "Óscar Ticas": "oscar_ticas.jpg",
+                "Uriel Canjura": "uriel_canjura.jpg",
+                "Israel Gutiérrez": "israel_gutierrez.jpg",
+                "Sofía Paiz": "sofia_paiz.jpg",
+                "Ivonne Nochez": "ivonne_nochez.jpg",
+                "Marvin Rodríguez": "marvin_rodriguez.jpg",
+                "Julissa Castillo": "julissa_castillo.jpg",
+                "Daniel Monterrosa": "daniel_monterrosa.jpg",
+                // Agregar más fotos cuando estén disponibles
+            };
+            
+            const photoFile = athletePhotos[athleteName];
+            if (photoFile) {
+                photoElement.className = 'profile-photo';
+                photoElement.style.backgroundImage = `url('atletas_fotos/${photoFile}')`;
+                photoElement.style.backgroundSize = 'cover';
+                photoElement.style.backgroundPosition = 'center';
+                photoElement.textContent = '';
+            } else {
+                photoElement.className = 'no-photo';
+                photoElement.style.backgroundImage = 'none';
+                photoElement.textContent = '👤';
+            }
+        }
+        
+        function navigateProfile(direction) {
+            if (direction === 'prev' && currentAthleteIndex > 0) {
+                showProfile(currentAthleteIndex - 1);
+            } else if (direction === 'next' && currentAthleteIndex < athletesData.length - 1) {
+                showProfile(currentAthleteIndex + 1);
+            }
+        }
+        
+        function closeProfile() {
+            document.getElementById('profileModal').style.display = 'none';
+            currentAthleteIndex = -1;
+        }
+        
+        function closeProfile() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('profileModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        function toggleStatsPanel() {
+            const panel = document.getElementById('statsPanel');
+            const toggleBtn = document.getElementById('toggleBtn');
+            
+            if (panel.classList.contains('collapsed')) {
+                panel.classList.remove('collapsed');
+                panel.classList.remove('minimized');
+                toggleBtn.textContent = '−';
+            } else {
+                panel.classList.add('collapsed');
+                toggleBtn.textContent = '+';
+            }
+        }
+        
+        function minimizeStatsPanel() {
+            const panel = document.getElementById('statsPanel');
+            panel.classList.toggle('minimized');
+        }
+        
+        // Cerrar panel con doble clic
+        document.addEventListener('DOMContentLoaded', function() {
+            const panel = document.getElementById('statsPanel');
+            panel.addEventListener('dblclick', function(e) {
+                if (e.target === panel) {
+                    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+        });
+        
+        // La inicialización ahora se maneja en el event listener principal más arriba
+    </script>
+    <p style="text-align: center; margin-top: 30px; font-size: 0.9em; color: #666;">Compilado por Ana Ruiz para AtletasESA. Todos los derechos reservados. | <a href="https://atletasesa.wordpress.com" target="_blank" style="color: #007bff;">Visitar el blog →</a></p>
+</body>
+</html>
